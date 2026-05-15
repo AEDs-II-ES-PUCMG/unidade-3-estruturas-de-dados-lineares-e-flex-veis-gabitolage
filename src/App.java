@@ -19,8 +19,11 @@ public class App {
     /** Quantidade de produtos cadastrados atualmente no vetor */
     static int quantosProdutos = 0;
 
-    /** Pilha de pedidos */
-    static Pilha<Pedido> pilhaPedidos = new Pilha<>();
+    /** Fila de pedidos (registro histórico) */
+    static Fila<Pedido> filaPedidos = new Fila<>();
+
+    /** Pilha de produtos mais recentemente pedidos */
+    static Pilha<Produto> pilhaProdutosRecentes = new Pilha<>();
         
     static void limparTela() {
         System.out.print("\033[H\033[2J");
@@ -64,6 +67,7 @@ public class App {
         System.out.println("4 - Iniciar novo pedido");
         System.out.println("5 - Fechar pedido");
         System.out.println("6 - Listar produtos dos pedidos mais recentes");
+        System.out.println("7 - Testar pilha com matrícula (empilhar dígitos sem repetição)");
         System.out.println("0 - Sair");
         System.out.print("Digite sua opção: ");
         return Integer.parseInt(teclado.nextLine());
@@ -207,13 +211,92 @@ public class App {
      * @param pedido O pedido que deve ser finalizado.
      */
     public static void finalizarPedido(Pedido pedido) {
-    	
-    	// TODO
+        cabecalho();
+        if (pedido == null) {
+            System.out.println("Não há pedido em andamento para finalizar.");
+            return;
+        }
+
+        filaPedidos.enfileirar(pedido);
+
+        Produto[] produtos = pedido.getProdutos();
+        int quant = pedido.getQuantosProdutos();
+        for (int i = 0; i < quant; i++) {
+            pilhaProdutosRecentes.empilhar(produtos[i]);
+        }
+
+        System.out.println("Pedido finalizado e registrado.");
     }
     
     public static void listarProdutosPedidosRecentes() {
-    	
-    	// TODO
+        cabecalho();
+        System.out.println("Listando produtos mais recentemente pedidos...");
+        int numProdutos = lerOpcao("Quantos produtos recentes deseja listar?", Integer.class);
+
+        try {
+            Pilha<Produto> recentes = pilhaProdutosRecentes.subPilha(numProdutos);
+
+            while (!recentes.vazia()) {
+                Produto p = recentes.desempilhar();
+                System.out.println(p.toString());
+                System.out.println("------------------------------");
+            }
+
+        } catch (IllegalArgumentException e) {
+            System.out.println("A pilha não possui essa quantidade de produtos.");
+        } catch (Exception e) {
+            System.out.println("Erro ao listar produtos recentes: " + e.getMessage());
+        }
+    }
+
+    public static void testarPilhaMatricula() {
+        cabecalho();
+        System.out.println("Teste da pilha com dígitos da matrícula (sem repetição)");
+        System.out.println("Digite sua matrícula (apenas dígitos):");
+        String matricula = teclado.nextLine();
+
+        Pilha<Integer> pilhaTeste = new Pilha<>();
+        boolean[] vistos = new boolean[10];
+        int cont = 0;
+
+        for (int i = 0; i < matricula.length(); i++) {
+            char c = matricula.charAt(i);
+            if (Character.isDigit(c)) {
+                int d = Character.getNumericValue(c);
+                if (!vistos[d]) {
+                    pilhaTeste.empilhar(d);
+                    vistos[d] = true;
+                    cont++;
+                }
+            }
+        }
+
+        System.out.println("Dígitos únicos empilhados: " + cont);
+
+        if (cont == 0) {
+            System.out.println("Nenhum dígito válido encontrado na matrícula.");
+            return;
+        }
+
+        Pilha<Integer> copia = pilhaTeste.subPilha(cont);
+        System.out.println("Conteúdo da pilha (do topo para baixo):");
+        while (!copia.vazia()) {
+            System.out.println(copia.desempilhar());
+        }
+    }
+
+    static void salvarPedidosEmArquivo(String nomeArquivo) {
+        try {
+            java.io.PrintWriter pw = new java.io.PrintWriter(new java.io.OutputStreamWriter(new java.io.FileOutputStream(nomeArquivo), java.nio.charset.StandardCharsets.UTF_8));
+            for (Pedido p : filaPedidos.elementos()) {
+                pw.println(p.toString());
+                pw.println("----");
+            }
+            pw.close();
+            System.out.println("Pedidos salvos em " + nomeArquivo);
+        } catch (java.io.IOException e) {
+            System.out.println("Erro ao salvar pedidos: " + e.getMessage());
+        }
     }
     
 	public static void main(String[] args) {
@@ -236,9 +319,12 @@ public class App {
                 case 4 -> pedido = iniciarPedido();
                 case 5 -> finalizarPedido(pedido);
                 case 6 -> listarProdutosPedidosRecentes();
+                case 7 -> testarPilhaMatricula();
             }
             pausa();
         }while(opcao != 0);       
+
+        salvarPedidosEmArquivo("pedidos_salvos.txt");
 
         teclado.close();    
     }
