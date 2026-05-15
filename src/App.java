@@ -68,6 +68,8 @@ public class App {
         System.out.println("5 - Fechar pedido");
         System.out.println("6 - Listar produtos dos pedidos mais recentes");
         System.out.println("7 - Testar pilha com matrícula (empilhar dígitos sem repetição)");
+        System.out.println("8 - Testar fila com nomes e contar ocorrências");
+        System.out.println("9 - Extrair lote de pedidos da fila");
         System.out.println("0 - Sair");
         System.out.print("Digite sua opção: ");
         return Integer.parseInt(teclado.nextLine());
@@ -285,6 +287,48 @@ public class App {
         }
     }
 
+    public static void testarFilaNomes() {
+        cabecalho();
+        System.out.println("Teste da fila com nomes (insira primeiro e segundo nome)");
+        System.out.print("Primeiro nome: ");
+        String primeiro = teclado.nextLine();
+        System.out.print("Segundo nome: ");
+        String segundo = teclado.nextLine();
+
+        Fila<Character> filaNomes = new Fila<>();
+        for (char c : primeiro.toCharArray()) {
+            filaNomes.enfileirar(c);
+        }
+        for (char c : segundo.toCharArray()) {
+            filaNomes.enfileirar(c);
+        }
+
+        System.out.println("Conteúdo da fila (ordem de chegada):");
+        StringBuilder sb = new StringBuilder();
+        for (Character ch : filaNomes.elementos()) {
+            sb.append(ch);
+        }
+        System.out.println(sb.toString());
+
+        System.out.print("Digite um caractere para contar ocorrências: ");
+        String entrada = teclado.nextLine();
+        char alvo = entrada.length() > 0 ? entrada.charAt(0) : '\0';
+        int ocorrencias = filaNomes.contarOcorrencias((Character)alvo);
+        System.out.println("Ocorrências de '" + alvo + "': " + ocorrencias);
+    }
+
+    public static void extrairLotePedidos() {
+        cabecalho();
+        System.out.println("Extração de lote de pedidos da fila");
+        int k = lerOpcao("Quantos pedidos deseja extrair?", Integer.class);
+        Fila<Pedido> lote = filaPedidos.extrairLote(k);
+        System.out.println("Pedidos extraídos (ordem de chegada):");
+        for (Pedido p : lote.elementos()) {
+            System.out.println(p.toString());
+            System.out.println("------------------------------");
+        }
+    }
+
     static void salvarPedidosEmArquivo(String nomeArquivo) {
         try {
             java.io.PrintWriter pw = new java.io.PrintWriter(new java.io.OutputStreamWriter(new java.io.FileOutputStream(nomeArquivo), java.nio.charset.StandardCharsets.UTF_8));
@@ -320,6 +364,8 @@ public class App {
                 case 5 -> finalizarPedido(pedido);
                 case 6 -> listarProdutosPedidosRecentes();
                 case 7 -> testarPilhaMatricula();
+                case 8 -> testarFilaNomes();
+                case 9 -> extrairLotePedidos();
             }
             pausa();
         }while(opcao != 0);       
